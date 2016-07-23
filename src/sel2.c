@@ -51,7 +51,7 @@
 #include <math.h>
 #include "allheaders.h"
 
-static const l_int32  L_BUF_SIZE = 512;
+#define  L_BUF_SIZE 512
 
     /* Linear brick sel sizes, including all those that are required
      * for decomposable sels up to size 63. */
