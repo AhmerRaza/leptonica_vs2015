@@ -43,3 +43,6 @@ conv2doxy
 /doxygen.log
 /doc/*.tmp
 /doc/html/*
+/ConsoleApplication1/Debug
+/vs2008
+/vs2008-1.68.zip
