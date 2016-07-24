@@ -5,9 +5,10 @@
 
 int main(int argc, char *argv[])
 {
-	printf("liblept version:\n%s\n", getLeptonicaVersion());
-	printf("image library versions:\n%s", getImagelibVersions());
+	printf("testing: %s\n", getLeptonicaVersion());
+	
+    main_util(argc, argv);
 
-	return main_util(argc, argv);
+	return 0;
 }
 

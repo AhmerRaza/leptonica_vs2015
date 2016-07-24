@@ -13,6 +13,14 @@
 #include <stdlib.h>
 #include <string.h>
 
+#ifndef PERFTIME
+#include <windows.h>
+#include <winbase.h>
+#define PERFTIME_INIT unsigned __int64 freq;  QueryPerformanceFrequency((LARGE_INTEGER*)&freq); double timerFrequency = (1.0/freq);  unsigned __int64 startTime;  unsigned __int64 endTime;  double timeDifferenceInMilliseconds;
+#define PERFTIME_START QueryPerformanceCounter((LARGE_INTEGER *)&startTime);
+#define PERFTIME_END QueryPerformanceCounter((LARGE_INTEGER *)&endTime); timeDifferenceInMilliseconds = ((endTime-startTime) * timerFrequency);  printf("Timing: %fms\n",timeDifferenceInMilliseconds*1000);
+#endif
+
 #define L_LITTLE_ENDIAN
 /* The only leptonica header file you normally need to include: */
 #include "allheaders.h"

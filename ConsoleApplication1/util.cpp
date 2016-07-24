@@ -126,6 +126,9 @@ int main_util(int argc, char *argv[])
     return 2;
   }
 
+  PERFTIME_INIT
+  PERFTIME_START
+
   if (perform_negate == NEGATE_YES)
   {
     /* Negate image */
@@ -222,6 +225,8 @@ int main_util(int argc, char *argv[])
       }
     }
   }
+
+  PERFTIME_END
 
   /* Get extension of output image */
   status = splitPathAtExtension(dest_file, NULL, &ext);
