@@ -1,10 +1,5 @@
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
-#define L_LITTLE_ENDIAN
-#include "allheaders.h"
+#include "stdafx.h"
 
 
 #define NO_VALUE    (-1)
@@ -28,7 +23,7 @@ Needed because sometimes furigana does not have a perfect gap between the text a
 
 typedef enum
 {
-  NEGATE_NO,   /* Do not negate image */
+  NEGATE_NO = 0,   /* Do not negate image */
   NEGATE_YES,  /* Force negate */
   NEGATE_AUTO, /* Automatically negate if border pixels are dark */
 
@@ -64,7 +59,7 @@ int main_util(int argc, char *argv[])
   char source_file[MAX_FILE_LEN] = "in.png";
   char dest_file[MAX_FILE_LEN] = "out.png";
 
-  Negate_enum perform_negate = NEGATE_AUTO;
+  Negate_enum perform_negate = NEGATE_NO;
   l_float32 dark_bg_threshold = 0.5f; /* From 0.0 to 1.0, with 0 being all white and 1 being all black */
 
   int perform_scale = LEPT_TRUE;
@@ -95,7 +90,7 @@ int main_util(int argc, char *argv[])
     strcpy_s(source_file, MAX_FILE_LEN, argv[1]);
     strcpy_s(dest_file, MAX_FILE_LEN, argv[2]);
 
-    perform_negate = atoi(argv[3]);
+    perform_negate = (Negate_enum)atoi(argv[3]);
     dark_bg_threshold = (float)atof(argv[4]);
 
     perform_scale = atoi(argv[5]);
@@ -112,7 +107,7 @@ int main_util(int argc, char *argv[])
     otsu_smoothy = atoi(argv[14]);
     otsu_scorefract = (float)atof(argv[15]);
 
-    remove_furigana = atoi(argv[16]);
+    remove_furigana = (Remove_furigana_enum)atoi(argv[16]);
   }
 
   /* Read in source image */

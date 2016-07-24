@@ -3,15 +3,11 @@
 
 #include "stdafx.h"
 
-#define L_LITTLE_ENDIAN
-/* The only leptonica header file you normally need to include: */
-#include "allheaders.h"
-
-int main()
+int main(int argc, char *argv[])
 {
 	printf("liblept version:\n%s\n", getLeptonicaVersion());
 	printf("image library versions:\n%s", getImagelibVersions());
 
-    return 0;
+	return main_util(argc, argv);
 }
 
