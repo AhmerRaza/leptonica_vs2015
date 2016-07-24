@@ -2,6 +2,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#define L_LITTLE_ENDIAN
 #include "allheaders.h"
 
 
@@ -57,7 +59,7 @@ static l_int32 erase_area_left_to_right(PIX *pixs, l_int32 x, l_int32 width);
 static l_int32 erase_area_top_to_bottom(PIX *pixs, l_int32 y, l_int32 height);
 
 
-int main(int argc, char *argv[])
+int main_util(int argc, char *argv[])
 {
   char source_file[MAX_FILE_LEN] = "in.png";
   char dest_file[MAX_FILE_LEN] = "out.png";

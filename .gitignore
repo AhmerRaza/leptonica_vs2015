@@ -44,5 +44,12 @@ conv2doxy
 /doc/*.tmp
 /doc/html/*
 /ConsoleApplication1/Debug
-/vs2008
-/vs2008-1.68.zip
+/vs2015/Debug
+/vs2015/DLL Debug
+/vs2015/LIB Debug
+/vs2015/LIB Release
+/vs2015/leptonica.VC.db
+/vs2015/leptonica.VC.VC.opendb
+/vs2015/.vs
+/ConsoleApplication1/Release
+/vs2015/Release
