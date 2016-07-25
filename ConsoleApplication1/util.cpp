@@ -183,6 +183,8 @@ int main_util(int argc, char *argv[])
       return 6;
     }
   }
+  
+  pixEqualizeTRC(pixs, pixs, 0.2, 2);
 
   if (perform_unsharp_mask)
   {
@@ -193,7 +195,9 @@ int main_util(int argc, char *argv[])
     {
       return 7;
     }
-  }
+  } 
+
+  pixContrastTRC(pixs, pixs, 2.0);  
 
   if (perform_otsu_binarize)
   {
