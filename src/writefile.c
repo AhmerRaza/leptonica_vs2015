@@ -953,11 +953,11 @@ char            fullpath[_MAX_PATH];
     index++;
     if (pixGetDepth(pix2) < 8 ||
         (w < MAX_SIZE_FOR_PNG && h < MAX_SIZE_FOR_PNG)) {
-        snprintf(buffer, L_BUF_SIZE, "/tmp/lept/disp/write.%03d.png", index);
-        pixWrite(buffer, pix2, IFF_PNG);
+        snprintf(buffer, L_BUF_SIZE, "/tmp/lept/disp/write.%03d.bmp", index);
+        pixWrite(buffer, pix2, IFF_BMP);
     } else {
-        snprintf(buffer, L_BUF_SIZE, "/tmp/lept/disp/write.%03d.jpg", index);
-        pixWrite(buffer, pix2, IFF_JFIF_JPEG);
+        snprintf(buffer, L_BUF_SIZE, "/tmp/lept/disp/write.%03d.bmp", index);
+        pixWrite(buffer, pix2, IFF_BMP);
     }
     tempname = genPathname(buffer, NULL);
 

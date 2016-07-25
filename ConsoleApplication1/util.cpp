@@ -23,18 +23,18 @@ Needed because sometimes furigana does not have a perfect gap between the text a
 
 typedef enum
 {
-  NEGATE_NO = 0,   /* Do not negate image */
-  NEGATE_YES,  /* Force negate */
-  NEGATE_AUTO, /* Automatically negate if border pixels are dark */
+	NEGATE_NO = 0,   /* Do not negate image */
+	NEGATE_YES,  /* Force negate */
+	NEGATE_AUTO, /* Automatically negate if border pixels are dark */
 
 } Negate_enum;
 
 
 typedef enum
 {
-  REMOVE_FURIGANA_NO,         /* Do not remove furigana */
-  REMOVE_FURIGANA_VERTICAL,   /* Remove furigana from vertically formatted text */
-  REMOVE_FURIGANA_HORIZONTAL, /* Remove furigana from horizontally formatted text */
+	REMOVE_FURIGANA_NO,         /* Do not remove furigana */
+	REMOVE_FURIGANA_VERTICAL,   /* Remove furigana from vertically formatted text */
+	REMOVE_FURIGANA_HORIZONTAL, /* Remove furigana from horizontally formatted text */
 
 } Remove_furigana_enum;
 
@@ -42,8 +42,8 @@ typedef enum
 /* Span of lines that contain foreground text. Used during furigana removal. */
 typedef struct
 {
-  int start;
-  int end;
+	int start;
+	int end;
 
 } Span;
 
@@ -56,211 +56,249 @@ static l_int32 erase_area_top_to_bottom(PIX *pixs, l_int32 y, l_int32 height);
 
 int main_util(int argc, char *argv[])
 {
-  char source_file[MAX_FILE_LEN] = "in.png";
-  char dest_file[MAX_FILE_LEN] = "out.png";
+	char source_file[MAX_FILE_LEN] = "in.png";
+	char dest_file[MAX_FILE_LEN] = "out.png";
 
-  Negate_enum perform_negate = NEGATE_NO;
-  l_float32 dark_bg_threshold = 0.5f; /* From 0.0 to 1.0, with 0 being all white and 1 being all black */
+	Negate_enum perform_negate = NEGATE_NO;
+	l_float32 dark_bg_threshold = 0.5f; /* From 0.0 to 1.0, with 0 being all white and 1 being all black */
 
-  int perform_scale = LEPT_TRUE;
-  l_float32 scale_factor = 3.5f;
+	int perform_scale = LEPT_TRUE;
+	l_float32 scale_factor = 3.5f;
 
-  int perform_unsharp_mask = LEPT_TRUE;
-  l_int32 usm_halfwidth = 5;
-  l_float32 usm_fract = 2.5f;
+	int perform_unsharp_mask = LEPT_TRUE;
+	l_int32 usm_halfwidth = 5;
+	l_float32 usm_fract = 2.5f;
 
-  int perform_otsu_binarize = LEPT_TRUE;
-  l_int32 otsu_sx = 2000;
-  l_int32 otsu_sy = 2000;
-  l_int32 otsu_smoothx = 0;
-  l_int32 otsu_smoothy = 0;
-  l_float32 otsu_scorefract = 0.0f;
+	int perform_otsu_binarize = LEPT_TRUE;
+	l_int32 otsu_sx = 2000;
+	l_int32 otsu_sy = 2000;
+	l_int32 otsu_smoothx = 0;
+	l_int32 otsu_smoothy = 0;
+	l_float32 otsu_scorefract = 0.0f;
 
-  Remove_furigana_enum remove_furigana = REMOVE_FURIGANA_NO;
+	Remove_furigana_enum remove_furigana = REMOVE_FURIGANA_NO;
 
-  l_int32 status = LEPT_ERROR;
-  l_float32 border_avg = 0.0f;
-  PIX *pixs = NULL;
-  char *ext = NULL;
+	l_int32 status = LEPT_ERROR;
+	l_float32 border_avg = 0.0f;
+	PIX *pixs = NULL;
+	char *ext = NULL;
 
-  /* Get args.
-  leptonica_util.exe in.png out.png  2 0.5  1 3.5  1 5 2.5  1 2000 2000 0 0 0.0  1 */
-  if (argc >= 17)
-  {
-    strcpy_s(source_file, MAX_FILE_LEN, argv[1]);
-    strcpy_s(dest_file, MAX_FILE_LEN, argv[2]);
+	/* Get args.
+	leptonica_util.exe in.png out.png  2 0.5  1 3.5  1 5 2.5  1 2000 2000 0 0 0.0  1 */
+	if (argc >= 17)
+	{
+		strcpy_s(source_file, MAX_FILE_LEN, argv[1]);
+		strcpy_s(dest_file, MAX_FILE_LEN, argv[2]);
 
-    perform_negate = (Negate_enum)atoi(argv[3]);
-    dark_bg_threshold = (float)atof(argv[4]);
+		perform_negate = (Negate_enum)atoi(argv[3]);
+		dark_bg_threshold = (float)atof(argv[4]);
 
-    perform_scale = atoi(argv[5]);
-    scale_factor = (float)atof(argv[6]);
+		perform_scale = atoi(argv[5]);
+		scale_factor = (float)atof(argv[6]);
 
-    perform_unsharp_mask = atoi(argv[7]);
-    usm_halfwidth = atoi(argv[8]);
-    usm_fract = (float)atof(argv[9]);
+		perform_unsharp_mask = atoi(argv[7]);
+		usm_halfwidth = atoi(argv[8]);
+		usm_fract = (float)atof(argv[9]);
 
-    perform_otsu_binarize = atoi(argv[10]);
-    otsu_sx = atoi(argv[11]);
-    otsu_sy = atoi(argv[12]);
-    otsu_smoothx = atoi(argv[13]);
-    otsu_smoothy = atoi(argv[14]);
-    otsu_scorefract = (float)atof(argv[15]);
+		perform_otsu_binarize = atoi(argv[10]);
+		otsu_sx = atoi(argv[11]);
+		otsu_sy = atoi(argv[12]);
+		otsu_smoothx = atoi(argv[13]);
+		otsu_smoothy = atoi(argv[14]);
+		otsu_scorefract = (float)atof(argv[15]);
 
-    remove_furigana = (Remove_furigana_enum)atoi(argv[16]);
-  }
+		remove_furigana = (Remove_furigana_enum)atoi(argv[16]);
+	}
 
-  /* Read in source image */
-  pixs = pixRead(source_file);
+	/* Read in source image */
+	pixs = pixRead(source_file);
 
-  if (pixs == NULL)
-  {
-    return 1;
-  }
+	if (pixs == NULL)
+	{
+		return 1;
+	}
 
-  /* Convert to grayscale */
-  pixs = pixConvertRGBToGray(pixs, 0.0f, 0.0f, 0.0f);
+	/* Convert to grayscale */
+	pixs = pixConvertRGBToGray(pixs, 0.0f, 0.0f, 0.0f);
 
-  if (pixs == NULL)
-  {
-    return 2;
-  }
+	if (pixs == NULL)
+	{
+		return 2;
+	}
 
-  PERFTIME_INIT
-  PERFTIME_START
+	PERFTIME_INIT
+		PERFTIME_START
 
-  if (perform_negate == NEGATE_YES)
-  {
-    /* Negate image */
-    pixInvert(pixs, pixs);
+		if (perform_negate == NEGATE_YES)
+		{
+			/* Negate image */
+			pixInvert(pixs, pixs);
 
-    if (pixs == NULL)
-    {
-      return 3;
-    }
-  }
-  else if (perform_negate == NEGATE_AUTO)
-  {
-    PIX *otsu_pixs = NULL;
+			if (pixs == NULL)
+			{
+				return 3;
+			}
+		}
+		else if (perform_negate == NEGATE_AUTO)
+		{
+			PIX *otsu_pixs = NULL;
 
-    status = pixOtsuAdaptiveThreshold(pixs, otsu_sx, otsu_sy, otsu_smoothx, otsu_smoothy, otsu_scorefract, NULL, &otsu_pixs);
+			status = pixOtsuAdaptiveThreshold(pixs, otsu_sx, otsu_sy, otsu_smoothx, otsu_smoothy, otsu_scorefract, NULL, &otsu_pixs);
 
-    if (status != LEPT_OK)
-    {
-      return 4;
-    }
+			if (status != LEPT_OK)
+			{
+				return 4;
+			}
 
-    /* Get the average intensity of the border pixels,
-    with average of 0.0 being completely white and 1.0 being completely black. */
-    border_avg =  pixAverageOnLine(otsu_pixs, 0, 0, otsu_pixs->w - 1, 0, 1);                               /* Top */
-    border_avg += pixAverageOnLine(otsu_pixs, 0, otsu_pixs->h - 1, otsu_pixs->w - 1, otsu_pixs->h - 1, 1); /* Bottom */
-    border_avg += pixAverageOnLine(otsu_pixs, 0, 0, 0, otsu_pixs->h - 1, 1);                               /* Left */
-    border_avg += pixAverageOnLine(otsu_pixs, otsu_pixs->w - 1, 0, otsu_pixs->w - 1, otsu_pixs->h - 1, 1); /* Right */
-    border_avg /= 4.0f;
+			/* Get the average intensity of the border pixels,
+			with average of 0.0 being completely white and 1.0 being completely black. */
+			border_avg = pixAverageOnLine(otsu_pixs, 0, 0, otsu_pixs->w - 1, 0, 1);                               /* Top */
+			border_avg += pixAverageOnLine(otsu_pixs, 0, otsu_pixs->h - 1, otsu_pixs->w - 1, otsu_pixs->h - 1, 1); /* Bottom */
+			border_avg += pixAverageOnLine(otsu_pixs, 0, 0, 0, otsu_pixs->h - 1, 1);                               /* Left */
+			border_avg += pixAverageOnLine(otsu_pixs, otsu_pixs->w - 1, 0, otsu_pixs->w - 1, otsu_pixs->h - 1, 1); /* Right */
+			border_avg /= 4.0f;
 
-    pixDestroy(&otsu_pixs);
+			pixDestroy(&otsu_pixs);
 
-    /* If background is dark */
-    if (border_avg > dark_bg_threshold)
-    {
-      /* Negate image */
-      pixInvert(pixs, pixs);
+			/* If background is dark */
+			if (border_avg > dark_bg_threshold)
+			{
+				/* Negate image */
+				pixInvert(pixs, pixs);
 
-      if (pixs == NULL)
-      {
-        return 5;
-      }
-    }
-  }
+				if (pixs == NULL)
+				{
+					return 5;
+				}
+			}
+		}
 
-  if (perform_scale)
-  {
-    /* Scale the image (linear interpolation) */
-    pixs = pixScaleGrayLI(pixs, scale_factor, scale_factor);
+	if (perform_scale)
+	{
+		/* Scale the image (linear interpolation) */
+		pixs = pixScaleGrayLI(pixs, scale_factor, scale_factor);
 
-    if (pixs == NULL)
-    {
-      return 6;
-    }
-  }
-  
-  pixEqualizeTRC(pixs, pixs, 0.2, 2);
+		if (pixs == NULL)
+		{
+			return 6;
+		}
+	}
 
-  if (perform_unsharp_mask)
-  {
-    /* Apply unsharp mask */
-    pixs = pixUnsharpMaskingGray(pixs, usm_halfwidth, usm_fract);
+	//pixEqualizeTRC(pixs, pixs, 0.2, 2);
 
-    if (pixs == NULL)
-    {
-      return 7;
-    }
-  } 
+	if (perform_unsharp_mask)
+	{
+		/* Apply unsharp mask */
+		pixs = pixUnsharpMaskingGray(pixs, usm_halfwidth, usm_fract);
 
-  pixContrastTRC(pixs, pixs, 2.0);  
+		if (pixs == NULL)
+		{
+			return 7;
+		}
+	}
 
-  if (perform_otsu_binarize)
-  {
-    /* Binarize */
-    status = pixOtsuAdaptiveThreshold(pixs, otsu_sx, otsu_sy, otsu_smoothx, otsu_smoothy, otsu_scorefract, NULL, &pixs);
+	pixContrastTRC(pixs, pixs, 2.0);
 
-    if (status != LEPT_OK)
-    {
-      return 8;
-    }
+	if (perform_otsu_binarize)
+	{
+		/* Binarize */
+		status = pixOtsuAdaptiveThreshold(pixs, otsu_sx, otsu_sy, otsu_smoothx, otsu_smoothy, otsu_scorefract, NULL, &pixs);
 
-    /* Remove furigana? */
-    if (remove_furigana == REMOVE_FURIGANA_VERTICAL)
-    {
-      status = erase_furigana_vertical(pixs, scale_factor);
+		if (status != LEPT_OK)
+		{
+			return 8;
+		}
 
-      if (status != LEPT_OK)
-      {
-        return 9;
-      }
-    }
-    else if (remove_furigana == REMOVE_FURIGANA_HORIZONTAL)
-    {
-      status = erase_furigana_horizontal(pixs, scale_factor);
+		/* Remove furigana? */
+		if (remove_furigana == REMOVE_FURIGANA_VERTICAL)
+		{
+			status = erase_furigana_vertical(pixs, scale_factor);
 
-      if (status != LEPT_OK)
-      {
-        return 10;
-      }
-    }
-  }
+			if (status != LEPT_OK)
+			{
+				return 9;
+			}
+		}
+		else if (remove_furigana == REMOVE_FURIGANA_HORIZONTAL)
+		{
+			status = erase_furigana_horizontal(pixs, scale_factor);
 
-  PERFTIME_END
+			if (status != LEPT_OK)
+			{
+				return 10;
+			}
+		}
+	}
 
-  /* Get extension of output image */
-  status = splitPathAtExtension(dest_file, NULL, &ext);
+	{
+		//PIXA  **ppixa
+		BOXA * boxa = pixConnComp(pixs, NULL, 8);
+		int n = boxaGetCount(boxa);
 
-  if (status != LEPT_OK)
-  {
-    return 11;
-  }
+		PERFTIME_END
 
-  /* pixWriteImpliedFormat() doesn't recognize PBM/PGM/PPM extensions */
-  if ((strcmp(ext, ".pbm") == 0) || (strcmp(ext, ".pgm") == 0) || (strcmp(ext, ".ppm") == 0))
-  {
-    /* Write the image to file as a PNM */
-    status = pixWrite(dest_file, pixs, IFF_PNM);
-  }
-  else
-  {
-    /* Write the image to file */
-    status = pixWriteImpliedFormat(dest_file, pixs, 0, 0);
-  }
+		//fprintf(stderr, "Num 4-cc boxes: %d\n", n);
+		for (int i = 0; i < n; i++)
+		{
+			BOX * box = boxaGetBox(boxa, i, L_CLONE);
+			if (box->w >= 4 && box->h >= 4)
+			{
+				fprintf(stderr, "box[%d]: %00d;%00d | %dpx, %dpx\n", i, box->x, box->y, box->w, box->h);
 
-  if (status != LEPT_OK)
-  {
-    return 12;
-  }
+				pixRenderBox(pixs, box, 1, L_SET_PIXELS);
+			}
+			boxDestroy(&box);   /* remember, clones need to be destroyed */
+		}
+		boxaDestroy(&boxa);
+	}
+	
 
-  /* Free image data */
-  pixDestroy(&pixs);
+	{
+		pixDisplayWrite(NULL, -1);
 
-  return 0;
+		PIXA *pixa;
+		BOXA * boxa = pixConnComp(pixs, &pixa, 4);
+
+		PIX * pixd = pixaDisplayRandomCmap(pixa, pixGetWidth(pixs), pixGetHeight(pixs));
+		PIXCMAP * cmap = pixGetColormap(pixd);
+		pixcmapResetColor(cmap, 0, 0, 0, 20);  /* reset background to blue */
+		//pixDisplay(pixd, 100, 100);
+		pixWriteImpliedFormat("box.bmp", pixd, 0, 0);		
+		
+		boxaDestroy(&boxa);
+		pixDestroy(&pixd);
+		pixaDestroy(&pixa);
+	}
+
+		/* Get extension of output image */
+	status = splitPathAtExtension(dest_file, NULL, &ext);
+
+	if (status != LEPT_OK)
+	{
+		return 11;
+	}
+
+	/* pixWriteImpliedFormat() doesn't recognize PBM/PGM/PPM extensions */
+	if ((strcmp(ext, ".pbm") == 0) || (strcmp(ext, ".pgm") == 0) || (strcmp(ext, ".ppm") == 0))
+	{
+		/* Write the image to file as a PNM */
+		status = pixWrite(dest_file, pixs, IFF_PNM);
+	}
+	else
+	{
+		/* Write the image to file */
+		status = pixWriteImpliedFormat(dest_file, pixs, 0, 0);
+	}
+
+	if (status != LEPT_OK)
+	{
+		return 12;
+	}
+
+	/* Free image data */
+	pixDestroy(&pixs);
+
+	return 0;
 
 } /* main */
 
@@ -271,142 +309,142 @@ int main_util(int argc, char *argv[])
   Returns LEPT_OK on success. */
 static int erase_furigana_vertical(PIX *pixs, float scale_factor)
 {
-  int min_fg_pix_per_line = (int)(FURIGANA_MIN_FG_PIX_PER_LINE * scale_factor);
-  int min_span_width = (int)(FURIGANA_MIN_WIDTH * scale_factor);
-  l_uint32 x = 0;
-  l_uint32 y = 0;
-  int num_fg_pixels_on_line = 0;
-  int good_line = LEPT_FALSE;
-  int num_good_lines_in_cur_span = 0;
-  int total_good_lines = 0;
-  l_uint32 pixel_value = 0;
-  Span span = { NO_VALUE, NO_VALUE };
-  Span span_list[FURIGANA_MAX_SPANS];
-  int total_spans = 0;
-  int ave_span_width = 0;
-  int span_idx = 0;
-  Span *cur_span = NULL;
-  l_int32 status = LEPT_ERROR;
+	int min_fg_pix_per_line = (int)(FURIGANA_MIN_FG_PIX_PER_LINE * scale_factor);
+	int min_span_width = (int)(FURIGANA_MIN_WIDTH * scale_factor);
+	l_uint32 x = 0;
+	l_uint32 y = 0;
+	int num_fg_pixels_on_line = 0;
+	int good_line = LEPT_FALSE;
+	int num_good_lines_in_cur_span = 0;
+	int total_good_lines = 0;
+	l_uint32 pixel_value = 0;
+	Span span = { NO_VALUE, NO_VALUE };
+	Span span_list[FURIGANA_MAX_SPANS];
+	int total_spans = 0;
+	int ave_span_width = 0;
+	int span_idx = 0;
+	Span *cur_span = NULL;
+	l_int32 status = LEPT_ERROR;
 
-  /* Get list of spans that contain fg pixels */
-  for (x = 0; x < pixs->w; x++)
-  {
-    num_fg_pixels_on_line = 0;
-    good_line = LEPT_FALSE;
+	/* Get list of spans that contain fg pixels */
+	for (x = 0; x < pixs->w; x++)
+	{
+		num_fg_pixels_on_line = 0;
+		good_line = LEPT_FALSE;
 
-    for (y = 0; y < pixs->h; y++)
-    {
-      status = pixGetPixel(pixs, x, y, &pixel_value);
+		for (y = 0; y < pixs->h; y++)
+		{
+			status = pixGetPixel(pixs, x, y, &pixel_value);
 
-      if (status != LEPT_OK)
-      {
-        return status;
-      }
+			if (status != LEPT_OK)
+			{
+				return status;
+			}
 
-      /* If this is a foreground pixel */
-      if (pixel_value == 1)
-      {
-        num_fg_pixels_on_line++;
+			/* If this is a foreground pixel */
+			if (pixel_value == 1)
+			{
+				num_fg_pixels_on_line++;
 
-        /* If this line has already meet the minimum number of fg pixels, stop scanning it */
-        if (num_fg_pixels_on_line >= min_fg_pix_per_line)
-        {
-          good_line = LEPT_TRUE;
-          break;
-        }
-      }
-    }
+				/* If this line has already meet the minimum number of fg pixels, stop scanning it */
+				if (num_fg_pixels_on_line >= min_fg_pix_per_line)
+				{
+					good_line = LEPT_TRUE;
+					break;
+				}
+			}
+		}
 
-    /* If last line is good, set it bad in order to close the span */
-    if (good_line && (x == pixs->w - 1))
-    {
-      good_line = LEPT_FALSE;
-      num_good_lines_in_cur_span++;
-    }
+		/* If last line is good, set it bad in order to close the span */
+		if (good_line && (x == pixs->w - 1))
+		{
+			good_line = LEPT_FALSE;
+			num_good_lines_in_cur_span++;
+		}
 
-    /* If this line has the minimum number of fg pixels */
-    if (good_line)
-    {
-      /* Start a new span */
-      if (span.start == NO_VALUE)
-      {
-        span.start = x;
-      }
+		/* If this line has the minimum number of fg pixels */
+		if (good_line)
+		{
+			/* Start a new span */
+			if (span.start == NO_VALUE)
+			{
+				span.start = x;
+			}
 
-      num_good_lines_in_cur_span++;
-    }
-    else /* Line doesn't have enough fg pixels to consider as part of a span */
-    {
-      /* If a span has already been started, then end it */
-      if (span.start != NO_VALUE)
-      {
-        /* If this span isn't too small (needed so that the average isn't skewed) */
-        if (num_good_lines_in_cur_span >= min_span_width)
-        {
-          span.end = x;
+			num_good_lines_in_cur_span++;
+		}
+		else /* Line doesn't have enough fg pixels to consider as part of a span */
+		{
+			/* If a span has already been started, then end it */
+			if (span.start != NO_VALUE)
+			{
+				/* If this span isn't too small (needed so that the average isn't skewed) */
+				if (num_good_lines_in_cur_span >= min_span_width)
+				{
+					span.end = x;
 
-          total_good_lines += num_good_lines_in_cur_span;
+					total_good_lines += num_good_lines_in_cur_span;
 
-          /* Add span to the list */
-          span_list[total_spans] = span;
-          total_spans++;
+					/* Add span to the list */
+					span_list[total_spans] = span;
+					total_spans++;
 
-          /* Prevent span list overflow */
-          if (total_spans >= FURIGANA_MAX_SPANS)
-          {
-            break;
-          }
-        }
-      }
+					/* Prevent span list overflow */
+					if (total_spans >= FURIGANA_MAX_SPANS)
+					{
+						break;
+					}
+				}
+			}
 
-      /* Reset span */
-      span.start = NO_VALUE;
-      span.end = NO_VALUE;
-      num_good_lines_in_cur_span = 0;
-    }
-  }
+			/* Reset span */
+			span.start = NO_VALUE;
+			span.end = NO_VALUE;
+			num_good_lines_in_cur_span = 0;
+		}
+	}
 
-  if (total_spans == 0)
-  {
-    return LEPT_OK;
-  }
+	if (total_spans == 0)
+	{
+		return LEPT_OK;
+	}
 
-  /* Get average width of the spans */
-  ave_span_width = total_good_lines / total_spans;
+	/* Get average width of the spans */
+	ave_span_width = total_good_lines / total_spans;
 
-  x = 0;
+	x = 0;
 
-  /* Erase areas of the PIX where either no span exists or where a span is too narrow */
-  for (span_idx = 0; span_idx < total_spans; span_idx++)
-  {
-    cur_span = &span_list[span_idx];
+	/* Erase areas of the PIX where either no span exists or where a span is too narrow */
+	for (span_idx = 0; span_idx < total_spans; span_idx++)
+	{
+		cur_span = &span_list[span_idx];
 
-    /* If span is at least of average width, erase area between the previous span and this span */
-    if ((cur_span->end - cur_span->start + 1) >= (int)(ave_span_width * 0.9))
-    {
-      status = erase_area_left_to_right(pixs, x, cur_span->start - x);
+		/* If span is at least of average width, erase area between the previous span and this span */
+		if ((cur_span->end - cur_span->start + 1) >= (int)(ave_span_width * 0.9))
+		{
+			status = erase_area_left_to_right(pixs, x, cur_span->start - x);
 
-      if (status != LEPT_OK)
-      {
-        return status;
-      }
+			if (status != LEPT_OK)
+			{
+				return status;
+			}
 
-      x = cur_span->end + 1;
-    }
-  }
+			x = cur_span->end + 1;
+		}
+	}
 
-  /* Clear area between the end of the right-most span and the right edge of the PIX */
-  if ((x != 0) && (x < (pixs->w - 1)))
-  {
-    status = erase_area_left_to_right(pixs, x, pixs->w - x);
+	/* Clear area between the end of the right-most span and the right edge of the PIX */
+	if ((x != 0) && (x < (pixs->w - 1)))
+	{
+		status = erase_area_left_to_right(pixs, x, pixs->w - x);
 
-    if (status != LEPT_OK)
-    {
-      return status;
-    }
-  }
+		if (status != LEPT_OK)
+		{
+			return status;
+		}
+	}
 
-  return LEPT_OK;
+	return LEPT_OK;
 
 } /* erase_furigana_vertical */
 
@@ -417,142 +455,142 @@ static int erase_furigana_vertical(PIX *pixs, float scale_factor)
   Returns LEPT_OK on success. */
 static int erase_furigana_horizontal(PIX *pixs, float scale_factor)
 {
-  int min_fg_pix_per_line = (int)(FURIGANA_MIN_FG_PIX_PER_LINE * scale_factor);
-  int min_span_width = (int)(FURIGANA_MIN_WIDTH * scale_factor);
-  l_uint32 x = 0;
-  l_uint32 y = 0;
-  int num_fg_pixels_on_line = 0;
-  int good_line = LEPT_FALSE;
-  int num_good_lines_in_cur_span = 0;
-  int total_good_lines = 0;
-  l_uint32 pixel_value = 0;
-  Span span = { NO_VALUE, NO_VALUE };
-  Span span_list[FURIGANA_MAX_SPANS];
-  int total_spans = 0;
-  int ave_span_width = 0;
-  int span_idx = 0;
-  Span *cur_span = NULL;
-  l_int32 status = LEPT_ERROR;
+	int min_fg_pix_per_line = (int)(FURIGANA_MIN_FG_PIX_PER_LINE * scale_factor);
+	int min_span_width = (int)(FURIGANA_MIN_WIDTH * scale_factor);
+	l_uint32 x = 0;
+	l_uint32 y = 0;
+	int num_fg_pixels_on_line = 0;
+	int good_line = LEPT_FALSE;
+	int num_good_lines_in_cur_span = 0;
+	int total_good_lines = 0;
+	l_uint32 pixel_value = 0;
+	Span span = { NO_VALUE, NO_VALUE };
+	Span span_list[FURIGANA_MAX_SPANS];
+	int total_spans = 0;
+	int ave_span_width = 0;
+	int span_idx = 0;
+	Span *cur_span = NULL;
+	l_int32 status = LEPT_ERROR;
 
-  /* Get list of spans that contain fg pixels */
-  for (y = 0; y < pixs->h; y++)
-  {
-    num_fg_pixels_on_line = 0;
-    good_line = LEPT_FALSE;
+	/* Get list of spans that contain fg pixels */
+	for (y = 0; y < pixs->h; y++)
+	{
+		num_fg_pixels_on_line = 0;
+		good_line = LEPT_FALSE;
 
-    for (x = 0; x < pixs->w; x++)
-    {
-      status = pixGetPixel(pixs, x, y, &pixel_value);
+		for (x = 0; x < pixs->w; x++)
+		{
+			status = pixGetPixel(pixs, x, y, &pixel_value);
 
-      if (status != LEPT_OK)
-      {
-        return status;
-      }
+			if (status != LEPT_OK)
+			{
+				return status;
+			}
 
-      /* If this is a foreground pixel */
-      if (pixel_value == 1)
-      {
-        num_fg_pixels_on_line++;
+			/* If this is a foreground pixel */
+			if (pixel_value == 1)
+			{
+				num_fg_pixels_on_line++;
 
-        /* If this line has already meet the minimum number of fg pixels, stop scanning it */
-        if (num_fg_pixels_on_line >= min_fg_pix_per_line)
-        {
-          good_line = LEPT_TRUE;
-          break;
-        }
-      }
-    }
+				/* If this line has already meet the minimum number of fg pixels, stop scanning it */
+				if (num_fg_pixels_on_line >= min_fg_pix_per_line)
+				{
+					good_line = LEPT_TRUE;
+					break;
+				}
+			}
+		}
 
-    /* If last line is good, set it bad in order to close the span */
-    if (good_line && (y == pixs->h - 1))
-    {
-      good_line = LEPT_FALSE;
-      num_good_lines_in_cur_span++;
-    }
+		/* If last line is good, set it bad in order to close the span */
+		if (good_line && (y == pixs->h - 1))
+		{
+			good_line = LEPT_FALSE;
+			num_good_lines_in_cur_span++;
+		}
 
-    /* If this line has the minimum number of fg pixels */
-    if (good_line)
-    {
-      /* Start a new span */
-      if (span.start == NO_VALUE)
-      {
-        span.start = y;
-      }
+		/* If this line has the minimum number of fg pixels */
+		if (good_line)
+		{
+			/* Start a new span */
+			if (span.start == NO_VALUE)
+			{
+				span.start = y;
+			}
 
-      num_good_lines_in_cur_span++;
-    }
-    else /* Line doesn't have enough fg pixels to consider as part of a span */
-    {
-      /* If a span has already been started, then end it */
-      if (span.start != NO_VALUE)
-      {
-        /* If this span isn't too small (needed so that the average isn't skewed) */
-        if (num_good_lines_in_cur_span >= min_span_width)
-        {
-          span.end = y;
+			num_good_lines_in_cur_span++;
+		}
+		else /* Line doesn't have enough fg pixels to consider as part of a span */
+		{
+			/* If a span has already been started, then end it */
+			if (span.start != NO_VALUE)
+			{
+				/* If this span isn't too small (needed so that the average isn't skewed) */
+				if (num_good_lines_in_cur_span >= min_span_width)
+				{
+					span.end = y;
 
-          total_good_lines += num_good_lines_in_cur_span;
+					total_good_lines += num_good_lines_in_cur_span;
 
-          /* Add span to the list */
-          span_list[total_spans] = span;
-          total_spans++;
+					/* Add span to the list */
+					span_list[total_spans] = span;
+					total_spans++;
 
-          /* Prevent span list overflow */
-          if (total_spans >= FURIGANA_MAX_SPANS)
-          {
-            break;
-          }
-        }
-      }
+					/* Prevent span list overflow */
+					if (total_spans >= FURIGANA_MAX_SPANS)
+					{
+						break;
+					}
+				}
+			}
 
-      /* Reset span */
-      span.start = NO_VALUE;
-      span.end = NO_VALUE;
-      num_good_lines_in_cur_span = 0;
-    }
-  }
+			/* Reset span */
+			span.start = NO_VALUE;
+			span.end = NO_VALUE;
+			num_good_lines_in_cur_span = 0;
+		}
+	}
 
-  if (total_spans == 0)
-  {
-    return LEPT_OK;
-  }
+	if (total_spans == 0)
+	{
+		return LEPT_OK;
+	}
 
-  /* Get average width of the spans */
-  ave_span_width = total_good_lines / total_spans;
+	/* Get average width of the spans */
+	ave_span_width = total_good_lines / total_spans;
 
-  y = 0;
+	y = 0;
 
-  /* Erase areas of the PIX where either no span exists or where a span is too narrow */
-  for (span_idx = 0; span_idx < total_spans; span_idx++)
-  {
-    cur_span = &span_list[span_idx];
+	/* Erase areas of the PIX where either no span exists or where a span is too narrow */
+	for (span_idx = 0; span_idx < total_spans; span_idx++)
+	{
+		cur_span = &span_list[span_idx];
 
-    /* If span is at least of average width, erase area between the previous span and this span */
-    if ((cur_span->end - cur_span->start + 1) >= (int)(ave_span_width * 0.9))
-    {
-      status = erase_area_top_to_bottom(pixs, y, cur_span->start - y);
+		/* If span is at least of average width, erase area between the previous span and this span */
+		if ((cur_span->end - cur_span->start + 1) >= (int)(ave_span_width * 0.9))
+		{
+			status = erase_area_top_to_bottom(pixs, y, cur_span->start - y);
 
-      if (status != LEPT_OK)
-      {
-        return status;
-      }
+			if (status != LEPT_OK)
+			{
+				return status;
+			}
 
-      y = cur_span->end + 1;
-    }
-  }
+			y = cur_span->end + 1;
+		}
+	}
 
-  /* Clear area between the end of the right-most span and the right edge of the PIX */
-  if ((y != 0) && (y < (pixs->h - 1)))
-  {
-    status = erase_area_top_to_bottom(pixs, y, pixs->h - y);
+	/* Clear area between the end of the right-most span and the right edge of the PIX */
+	if ((y != 0) && (y < (pixs->h - 1)))
+	{
+		status = erase_area_top_to_bottom(pixs, y, pixs->h - y);
 
-    if (status != LEPT_OK)
-    {
-      return status;
-    }
-  }
+		if (status != LEPT_OK)
+		{
+			return status;
+		}
+	}
 
-  return LEPT_OK;
+	return LEPT_OK;
 
 } /* erase_furigana_horizontal */
 
@@ -561,17 +599,17 @@ static int erase_furigana_horizontal(PIX *pixs, float scale_factor)
   Returns 0 on success. */
 static l_int32 erase_area_left_to_right(PIX *pixs, l_int32 x, l_int32 width)
 {
-  l_int32 status = LEPT_ERROR;
-  BOX box;
+	l_int32 status = LEPT_ERROR;
+	BOX box;
 
-  box.x = x;
-  box.y = 0;
-  box.w = width;
-  box.h = pixs->h;
+	box.x = x;
+	box.y = 0;
+	box.w = width;
+	box.h = pixs->h;
 
-  status = pixClearInRect(pixs, &box);
+	status = pixClearInRect(pixs, &box);
 
-  return status;
+	return status;
 
 } /* erase_area_left_to_right */
 
@@ -580,17 +618,17 @@ static l_int32 erase_area_left_to_right(PIX *pixs, l_int32 x, l_int32 width)
   Returns 0 on success. */
 static l_int32 erase_area_top_to_bottom(PIX *pixs, l_int32 y, l_int32 height)
 {
-  l_int32 status = LEPT_ERROR;
-  BOX box;
+	l_int32 status = LEPT_ERROR;
+	BOX box;
 
-  box.x = 0;
-  box.y = y;
-  box.w = pixs->w;
-  box.h = height;
+	box.x = 0;
+	box.y = y;
+	box.w = pixs->w;
+	box.h = height;
 
-  status = pixClearInRect(pixs, &box);
+	status = pixClearInRect(pixs, &box);
 
-  return status;
+	return status;
 
 } /* erase_area_top_to_bottom */
 

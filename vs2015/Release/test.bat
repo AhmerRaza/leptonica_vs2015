@@ -2,6 +2,7 @@
 
 rem ok
 
-out.bmp
+start out.bmp
+start box.bmp
 
 pause
