@@ -245,7 +245,7 @@ int main_util(int argc, char *argv[])
 			{
 				fprintf(stderr, "box[%d]: %00d;%00d | %dpx, %dpx\n", i, box->x, box->y, box->w, box->h);
 
-				pixRenderBox(pixs, box, 1, L_SET_PIXELS);
+				//pixRenderBox(pixs, box, 1, L_FLIP_PIXELS);
 			}
 			boxDestroy(&box);   /* remember, clones need to be destroyed */
 		}
@@ -262,7 +262,19 @@ int main_util(int argc, char *argv[])
 		PIX * pixd = pixaDisplayRandomCmap(pixa, pixGetWidth(pixs), pixGetHeight(pixs));
 		PIXCMAP * cmap = pixGetColormap(pixd);
 		pixcmapResetColor(cmap, 0, 0, 0, 20);  /* reset background to blue */
-		//pixDisplay(pixd, 100, 100);
+		
+		int n = boxaGetCount(boxa);
+		for (int i = 0; i < n; i++)
+		{
+			BOX * box = boxaGetBox(boxa, i, L_CLONE);
+			if (box->w >= 4 && box->h >= 4)
+			{
+				pixRenderBox(pixd, box, 1, L_FLIP_PIXELS);
+			}
+			boxDestroy(&box);   /* remember, clones need to be destroyed */
+		}
+
+        //pixDisplay(pixd, 100, 100);
 		pixWriteImpliedFormat("box.bmp", pixd, 0, 0);		
 		
 		boxaDestroy(&boxa);
