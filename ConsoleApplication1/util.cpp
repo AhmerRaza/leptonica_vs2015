@@ -110,6 +110,15 @@ int main_util(int argc, char *argv[])
 		remove_furigana = (Remove_furigana_enum)atoi(argv[16]);
 	}
 
+	l_float32 f[4] = { 10, 5, 5, 5 };
+	NUMA n;
+	n.n = n.nalloc = 4;
+	n.delx = n.refcount = 1;
+	n.startx = 0;
+	n.array = &f[0];
+	pmsCreate(1024*10, 1024*100, &n, "log.txt");
+	setPixMemoryManager(pmsCustomAlloc, pmsCustomDealloc);
+
 	/* Read in source image */
 	pixs = pixRead(source_file);
 
@@ -127,51 +136,51 @@ int main_util(int argc, char *argv[])
 	}
 
 	PERFTIME_INIT
-		PERFTIME_START
+	PERFTIME_START
 
-		if (perform_negate == NEGATE_YES)
+	if (perform_negate == NEGATE_YES)
+	{
+		/* Negate image */
+		pixInvert(pixs, pixs);
+
+		if (pixs == NULL)
+		{
+			return 3;
+		}
+	}
+	else if (perform_negate == NEGATE_AUTO)
+	{
+		PIX *otsu_pixs = NULL;
+
+		status = pixOtsuAdaptiveThreshold(pixs, otsu_sx, otsu_sy, otsu_smoothx, otsu_smoothy, otsu_scorefract, NULL, &otsu_pixs);
+
+		if (status != LEPT_OK)
+		{
+			return 4;
+		}
+
+		/* Get the average intensity of the border pixels,
+		with average of 0.0 being completely white and 1.0 being completely black. */
+		border_avg = pixAverageOnLine(otsu_pixs, 0, 0, otsu_pixs->w - 1, 0, 1);                               /* Top */
+		border_avg += pixAverageOnLine(otsu_pixs, 0, otsu_pixs->h - 1, otsu_pixs->w - 1, otsu_pixs->h - 1, 1); /* Bottom */
+		border_avg += pixAverageOnLine(otsu_pixs, 0, 0, 0, otsu_pixs->h - 1, 1);                               /* Left */
+		border_avg += pixAverageOnLine(otsu_pixs, otsu_pixs->w - 1, 0, otsu_pixs->w - 1, otsu_pixs->h - 1, 1); /* Right */
+		border_avg /= 4.0f;
+
+		pixDestroy(&otsu_pixs);
+
+		/* If background is dark */
+		if (border_avg > dark_bg_threshold)
 		{
 			/* Negate image */
 			pixInvert(pixs, pixs);
 
 			if (pixs == NULL)
 			{
-				return 3;
+				return 5;
 			}
 		}
-		else if (perform_negate == NEGATE_AUTO)
-		{
-			PIX *otsu_pixs = NULL;
-
-			status = pixOtsuAdaptiveThreshold(pixs, otsu_sx, otsu_sy, otsu_smoothx, otsu_smoothy, otsu_scorefract, NULL, &otsu_pixs);
-
-			if (status != LEPT_OK)
-			{
-				return 4;
-			}
-
-			/* Get the average intensity of the border pixels,
-			with average of 0.0 being completely white and 1.0 being completely black. */
-			border_avg = pixAverageOnLine(otsu_pixs, 0, 0, otsu_pixs->w - 1, 0, 1);                               /* Top */
-			border_avg += pixAverageOnLine(otsu_pixs, 0, otsu_pixs->h - 1, otsu_pixs->w - 1, otsu_pixs->h - 1, 1); /* Bottom */
-			border_avg += pixAverageOnLine(otsu_pixs, 0, 0, 0, otsu_pixs->h - 1, 1);                               /* Left */
-			border_avg += pixAverageOnLine(otsu_pixs, otsu_pixs->w - 1, 0, otsu_pixs->w - 1, otsu_pixs->h - 1, 1); /* Right */
-			border_avg /= 4.0f;
-
-			pixDestroy(&otsu_pixs);
-
-			/* If background is dark */
-			if (border_avg > dark_bg_threshold)
-			{
-				/* Negate image */
-				pixInvert(pixs, pixs);
-
-				if (pixs == NULL)
-				{
-					return 5;
-				}
-			}
-		}
+	}
 
 	if (perform_scale)
 	{
@@ -185,6 +194,10 @@ int main_util(int argc, char *argv[])
 	}
 
 	//pixEqualizeTRC(pixs, pixs, 0.2, 2);
+
+	//pixs = pixCloseGray(pixs, 1, 1);
+	//pixs = pixBlockconv(pixs, 1, 1);
+	//pixInvert(pixs, pixs);
 
 	if (perform_unsharp_mask)
 	{
@@ -237,21 +250,21 @@ int main_util(int argc, char *argv[])
 
 		PERFTIME_END
 
-		//fprintf(stderr, "Num 4-cc boxes: %d\n", n);
-		for (int i = 0; i < n; i++)
-		{
-			BOX * box = boxaGetBox(boxa, i, L_CLONE);
-			if (box->w >= 4 && box->h >= 4)
+			//fprintf(stderr, "Num 4-cc boxes: %d\n", n);
+			for (int i = 0; i < n; i++)
 			{
-				fprintf(stderr, "box[%d]: %00d;%00d | %dpx, %dpx\n", i, box->x, box->y, box->w, box->h);
+				BOX * box = boxaGetBox(boxa, i, L_CLONE);
+				if (box->w >= 4 && box->h >= 4)
+				{
+					fprintf(stderr, "box[%d]: %00d;%00d | %dpx, %dpx\n", i, box->x, box->y, box->w, box->h);
 
-				//pixRenderBox(pixs, box, 1, L_FLIP_PIXELS);
+					//pixRenderBox(pixs, box, 1, L_FLIP_PIXELS);
+				}
+				boxDestroy(&box);   /* remember, clones need to be destroyed */
 			}
-			boxDestroy(&box);   /* remember, clones need to be destroyed */
-		}
 		boxaDestroy(&boxa);
 	}
-	
+
 
 	{
 		pixDisplayWrite(NULL, -1);
@@ -262,7 +275,7 @@ int main_util(int argc, char *argv[])
 		PIX * pixd = pixaDisplayRandomCmap(pixa, pixGetWidth(pixs), pixGetHeight(pixs));
 		PIXCMAP * cmap = pixGetColormap(pixd);
 		pixcmapResetColor(cmap, 0, 0, 0, 20);  /* reset background to blue */
-		
+
 		int n = boxaGetCount(boxa);
 		for (int i = 0; i < n; i++)
 		{
@@ -274,15 +287,15 @@ int main_util(int argc, char *argv[])
 			boxDestroy(&box);   /* remember, clones need to be destroyed */
 		}
 
-        //pixDisplay(pixd, 100, 100);
-		pixWriteImpliedFormat("box.bmp", pixd, 0, 0);		
-		
+		//pixDisplay(pixd, 100, 100);
+		pixWriteImpliedFormat("box.bmp", pixd, 0, 0);
+
 		boxaDestroy(&boxa);
 		pixDestroy(&pixd);
 		pixaDestroy(&pixa);
 	}
 
-		/* Get extension of output image */
+	/* Get extension of output image */
 	status = splitPathAtExtension(dest_file, NULL, &ext);
 
 	if (status != LEPT_OK)
@@ -309,6 +322,8 @@ int main_util(int argc, char *argv[])
 
 	/* Free image data */
 	pixDestroy(&pixs);
+
+	pmsDestroy();
 
 	return 0;
 

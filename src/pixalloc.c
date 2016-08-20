@@ -133,7 +133,7 @@ struct PixMemoryStore
 };
 typedef struct PixMemoryStore   L_PIX_MEM_STORE;
 
-static L_PIX_MEM_STORE  *CustomPMS = NULL;
+__declspec(thread) static L_PIX_MEM_STORE  *CustomPMS = NULL;
 
 
 /*!

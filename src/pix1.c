@@ -222,35 +222,21 @@ struct PixMemoryManager
 };
 
 /*! Default Pix memory manager */
-static struct PixMemoryManager  pix_mem_manager = {
+__declspec(thread) static struct PixMemoryManager  pix_mem_manager = {
     &malloc,
     &free
 };
 
-static void *
+inline static void *
 pix_malloc(size_t  size)
 {
-#ifndef _MSC_VER
     return (*pix_mem_manager.allocator)(size);
-#else  /* _MSC_VER */
-    /* Under MSVC++, pix_mem_manager is initialized after a call
-     * to pix_malloc.  Just ignore the custom allocator feature. */
-    return malloc(size);
-#endif  /* _MSC_VER */
 }
 
-static void
+inline static void
 pix_free(void  *ptr)
 {
-#ifndef _MSC_VER
     (*pix_mem_manager.deallocator)(ptr);
-    return;
-#else  /* _MSC_VER */
-    /* Under MSVC++, pix_mem_manager is initialized after a call
-     * to pix_malloc.  Just ignore the custom allocator feature. */
-    free(ptr);
-    return;
-#endif  /* _MSC_VER */
 }
 
 /*!
